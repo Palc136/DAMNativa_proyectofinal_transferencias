@@ -11,6 +11,7 @@
 
     <TextView
         style="@style/TextAppearance.App.Title"
+        android:layout_margin="25dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Mi carrito" />

@@ -18,7 +18,7 @@
             style="@style/TextAppearance.App.Title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="16dp"
+            android:layout_margin="25dp"
             android:text="Mis productos" />
 
         <TextView
@@ -42,12 +42,19 @@
     <!-- ¿Para qué sirve?: permitir agregar un producto nuevo. -->
     <!-- ¿Qué hace?: FAB anclado abajo a la derecha, color naranja. -->
     <!-- ¿Cuál es su función en el código?: SellerProductsFragment lo conecta para navegar al formulario. -->
+    <!-- ¿Para qué sirve?: permitir agregar un producto nuevo desde el listado. -->
+    <!-- ¿Qué hace?: FAB anclado abajo a la derecha, por ENCIMA del BottomNavigationView. -->
+    <!-- ¿Cuál es su función en el código?: SellerProductsFragment lo conecta para navegar al formulario. -->
+    <!--             El layout_marginBottom="80dp" es CLAVE: sin él, el BottomNav tapa el FAB. -->
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="16dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="80dp"
         android:contentDescription="Agregar producto"
         android:src="@android:drawable/ic_input_add"
         app:backgroundTint="@color/brand_orange"

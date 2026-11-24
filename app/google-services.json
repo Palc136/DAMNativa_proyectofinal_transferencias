@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "549506626179",
+    "project_id": "pacoshop",
+    "storage_bucket": "pacoshop.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:549506626179:android:e72ad4d6d85d6c7e24a1b6",
+        "android_client_info": {
+          "package_name": "com.alfonso.my_applicationdam_nativa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBjaaati9rIttXZmzFY2g7jCd_KvcCJhd0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -10,11 +10,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.alfonso.my_applicationdam_nativa.R;
 import com.alfonso.my_applicationdam_nativa.databinding.FragmentProductDetailBinding;
+import com.bumptech.glide.Glide;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 /**
- * ProductDetailFragment muestra el detalle completo de un producto.
- * Recibe los datos del producto por Bundle desde CatalogFragment.
+ * ProductDetailFragment carga el producto desde Firestore usando el docId
+ * recibido desde el catálogo o el home.
  */
 public class ProductDetailFragment extends Fragment {
 
@@ -25,10 +29,6 @@ public class ProductDetailFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-
-        // ¿Para qué sirve?: inflar el layout fragment_product_detail.xml.
-        // ¿Qué hace?: construye la jerarquía de vistas y devuelve el binding.
-        // ¿Cuál es su función en el código?: vista raíz de la pantalla de detalle.
         binding = FragmentProductDetailBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -38,27 +38,53 @@ public class ProductDetailFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // ¿Para qué sirve?: leer los datos del producto enviados por CatalogFragment.
-        // ¿Qué hace?: obtiene el Bundle de argumentos y extrae nombre, categoría,
-        //             precio y descripción con valores por defecto.
-        // ¿Cuál es su función en el código?: alimenta la interfaz del detalle con los
-        //             datos correctos del producto seleccionado.
+        // ¿Para qué sirve?: obtener el docId del producto a mostrar.
+        // ¿Qué hace?: lee el Bundle de argumentos enviado por el catálogo o el home.
         Bundle args = getArguments();
-        if (args != null) {
-            String name = args.getString("productName", "Producto");
-            String category = args.getString("productCategory", "Sin categoría");
-            double price = args.getDouble("productPrice", 0.0);
-            String description = args.getString("productDescription", "Sin descripción");
+        String docId = (args != null) ? args.getString("docId") : null;
 
-            binding.tvName.setText(name);
-            binding.tvCategory.setText(category);
-            binding.tvPrice.setText("$" + String.format("%,.0f", price));
-            binding.tvDescription.setText(description);
+        if (docId == null) {
+            Toast.makeText(requireContext(),
+                    "Producto no encontrado", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        // ¿Para qué sirve?: manejar el click del botón "Agregar al carrito".
-        // ¿Qué hace?: muestra un Toast confirmando la acción.
-        // ¿Cuál es su función en el código?: gancho de interacción del usuario.
+        // ¿Para qué sirve?: consultar el documento products/{docId} en Firestore.
+        // ¿Qué hace?: llena los TextViews y carga la imagen con Glide al recibir los datos.
+        // ¿Cuál es su función en el código?: muestra el detalle siempre actualizado.
+        FirebaseFirestore.getInstance()
+                .collection("products")
+                .document(docId)
+                .get()
+                .addOnSuccessListener((DocumentSnapshot doc) -> {
+                    if (!doc.exists()) {
+                        Toast.makeText(requireContext(),
+                                "Producto eliminado", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    binding.tvName.setText(doc.getString("nombre"));
+                    binding.tvCategory.setText(doc.getString("categoria"));
+                    Double price = doc.getDouble("precio");
+                    binding.tvPrice.setText("$" + String.format("%,.0f",
+                            price != null ? price : 0.0));
+                    binding.tvDescription.setText(doc.getString("descripcion"));
+
+                    // ¿Para qué sirve?: cargar la imagen real del producto.
+                    String imageUrl = doc.getString("imageUrl");
+                    if (imageUrl != null && !imageUrl.isEmpty()) {
+                        Glide.with(requireContext())
+                                .load(imageUrl)
+                                .placeholder(R.color.surface_light)
+                                .into(binding.imgProduct);
+                    }
+                })
+                .addOnFailureListener((Exception e) ->
+                        Toast.makeText(requireContext(),
+                                "Error: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show());
+
+        // ¿Para qué sirve?: manejar el click de "Agregar al carrito" (mock).
         binding.btnAddToCart.setOnClickListener(v ->
                 Toast.makeText(requireContext(),
                         "Producto agregado al carrito",
@@ -68,10 +94,6 @@ public class ProductDetailFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
-        // ¿Para qué sirve?: liberar la referencia al binding.
-        // ¿Qué hace?: pone binding en null cuando la vista se destruye.
-        // ¿Cuál es su función en el código?: evita fugas de memoria.
         binding = null;
     }
 }

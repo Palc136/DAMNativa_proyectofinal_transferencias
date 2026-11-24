@@ -1,5 +1,5 @@
 package com.alfonso.my_applicationdam_nativa.seller;
-import com.alfonso.my_applicationdam_nativa.R;
+
 import android.os.Bundle;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -17,35 +17,33 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.alfonso.my_applicationdam_nativa.R;
 import com.alfonso.my_applicationdam_nativa.adapters.ProductAdapter;
 import com.alfonso.my_applicationdam_nativa.databinding.FragmentSellerProductsBinding;
 import com.alfonso.my_applicationdam_nativa.model.Product;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * SellerProductsFragment muestra los productos del vendedor y permite
- * agregar uno nuevo con el FAB o editar/eliminar con long-press.
+ * SellerProductsFragment lista los productos del vendedor autenticado desde Firestore,
+ * permite crear uno nuevo con el FAB, editarlo o eliminarlo con long-press.
  */
 public class SellerProductsFragment extends Fragment {
 
-    // ¿Para qué sirve?: mantener la referencia al binding del layout.
-    // ¿Qué hace?: expone rvSellerProducts y fabAdd.
     private FragmentSellerProductsBinding binding;
-
-    // ¿Para qué sirve?: mantener la lista de productos del vendedor.
-    // ¿Qué hace?: es la fuente de datos del RecyclerView.
     private final List<Product> products = new ArrayList<>();
+    private ProductAdapter adapter;
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-
-        // ¿Para qué sirve?: inflar fragment_seller_products.xml.
-        // ¿Qué hace?: construye la jerarquía de vistas y devuelve el binding.
         binding = FragmentSellerProductsBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -55,40 +53,12 @@ public class SellerProductsFragment extends Fragment {
                               @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // ¿Para qué sirve?: cargar los productos del vendedor.
-        // ¿Qué hace?: llena la lista con datos mock y configura el RecyclerView.
-        loadProducts();
-
-        // ¿Para qué sirve?: navegar al formulario de producto nuevo.
-        // ¿Qué hace?: al pulsar el FAB, navega al destino productFormFragment.
-        binding.fabAdd.setOnClickListener(v -> {
-            NavController nav = Navigation.findNavController(requireView());
-            nav.navigate(R.id.productFormFragment);
-        });
-    }
-
-    /**
-     * Carga los productos mock, configura el RecyclerView y activa el long-press.
-     */
-    private void loadProducts() {
-
-        // ¿Para qué sirve?: llenar la lista con productos de ejemplo.
-        products.clear();
-        products.add(new Product(1, "Mochila wayuu", 120000.0, "Tejida a mano", "Artesanías"));
-        products.add(new Product(2, "Café artesanal", 25000.0, "Tostado local", "Alimentos"));
-        products.add(new Product(3, "Joyería en plata", 85000.0, "Hecha a mano", "Joyería"));
-
-        // ¿Para qué sirve?: configurar el RecyclerView con adapter y layoutManager.
-        // ¿Qué hace?: asigna LinearLayoutManager y ProductAdapter con la lista.
+        // ¿Para qué sirve?: configurar el RecyclerView con el adapter.
+        adapter = new ProductAdapter(products);
         binding.rvSellerProducts.setLayoutManager(new LinearLayoutManager(requireContext()));
-        binding.rvSellerProducts.setAdapter(new ProductAdapter(products));
+        binding.rvSellerProducts.setAdapter(adapter);
 
-        // ¿Para qué sirve?: detectar el long-press (pulsación larga) sobre un producto.
-        // ¿Qué hace?: crea un GestureDetector con un SimpleOnGestureListener que, al
-        //             detectar long-press, calcula la posición tocada y abre el diálogo
-        //             con las opciones Editar / Eliminar.
-        // ¿Cuál es su función en el código?: añade la acción CRUD de edición/eliminación
-        //             al listado sin saturar cada celda con botones adicionales.
+        // ¿Para qué sirve?: detectar long-press para editar/eliminar.
         final GestureDetector detector = new GestureDetector(requireContext(),
                 new GestureDetector.SimpleOnGestureListener() {
                     @Override
@@ -102,12 +72,6 @@ public class SellerProductsFragment extends Fragment {
                         }
                     }
                 });
-
-        // ¿Para qué sirve?: enganchar el GestureDetector al RecyclerView.
-        // ¿Qué hace?: registra un SimpleOnItemTouchListener que reenvía cada evento táctil
-        //             al detector, que a su vez dispara onLongPress cuando corresponde.
-        // ¿Cuál es su función en el código?: conecta los toques del usuario con la acción
-        //             de editar/eliminar el producto seleccionado.
         binding.rvSellerProducts.addOnItemTouchListener(
                 new RecyclerView.SimpleOnItemTouchListener() {
                     @Override
@@ -116,38 +80,124 @@ public class SellerProductsFragment extends Fragment {
                         return detector.onTouchEvent(e);
                     }
                 });
+
+        // ¿Para qué sirve?: navegar al formulario de producto nuevo.
+        binding.fabAdd.setOnClickListener(v -> {
+            NavController nav = Navigation.findNavController(requireView());
+            nav.navigate(R.id.productFormFragment);
+        });
+
+        // ¿Para qué sirve?: cargar la lista de productos del vendedor desde Firestore.
+        cargarMisProductos();
     }
 
     /**
-     * Muestra un diálogo con opciones Editar / Eliminar para el producto.
+     * Lee de Firestore los productos cuyo vendedorId coincide con el usuario autenticado.
+     */
+    private void cargarMisProductos() {
+
+        // ¿Para qué sirve?: obtener el UID del vendedor logueado.
+        String uid = FirebaseAuth.getInstance().getCurrentUser() != null
+                ? FirebaseAuth.getInstance().getCurrentUser().getUid()
+                : null;
+
+        if (uid == null) {
+            Toast.makeText(requireContext(), "Debes iniciar sesión",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // ¿Para qué sirve?: escuchar cambios en tiempo real en la colección products.
+        // ¿Qué hace?: addSnapshotListener se dispara cada vez que cambia la colección
+        //             y devuelve la lista actualizada.
+        // ¿Cuál es su función en el código?: al crear, editar o eliminar un producto,
+        //             la lista se actualiza automáticamente sin recargar la pantalla.
+        FirebaseFirestore.getInstance()
+                .collection("products")
+                .whereEqualTo("vendedorId", uid)
+                .addSnapshotListener((QuerySnapshot snapshots, com.google.firebase.firestore.FirebaseFirestoreException error) -> {
+                    if (error != null) {
+                        Toast.makeText(requireContext(),
+                                "Error al cargar: " + error.getMessage(),
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    if (snapshots == null) return;
+
+                    // ¿Para qué sirve?: convertir cada documento en un objeto Product.
+                    products.clear();
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
+                        Product p = new Product(
+                                doc.getId(),
+                                0,
+                                doc.getString("nombre"),
+                                doc.getDouble("precio") != null ? doc.getDouble("precio") : 0,
+                                doc.getString("descripcion") != null ? doc.getString("descripcion") : "",
+                                doc.getString("categoria") != null ? doc.getString("categoria") : "",
+                                doc.getString("imageUrl") != null ? doc.getString("imageUrl") : "",
+                                doc.getString("vendedorId") != null ? doc.getString("vendedorId") : ""
+                        );
+                        products.add(p);
+                    }
+                    adapter.notifyDataSetChanged();
+                });
+    }
+
+    /**
+     * Muestra el diálogo de Editar / Eliminar para el producto.
      */
     private void showProductOptions(Product product) {
-
-        // ¿Para qué sirve?: ofrecer al vendedor elegir entre editar o eliminar.
-        // ¿Qué hace?: construye un AlertDialog con dos opciones; según la elegida,
-        //             navega al formulario o elimina el producto de la lista.
         new AlertDialog.Builder(requireContext())
                 .setTitle(product.getName())
                 .setItems(new CharSequence[]{"Editar", "Eliminar"}, (dialog, which) -> {
                     if (which == 0) {
+                        // ¿Para qué sirve?: navegar al formulario con el docId para editarlo.
+                        Bundle args = new Bundle();
+                        args.putString("docId", product.getDocId());
                         NavController nav = Navigation.findNavController(requireView());
-                        nav.navigate(R.id.productFormFragment);
+                        nav.navigate(R.id.productFormFragment, args);
                     } else {
-                        products.remove(product);
-                        binding.rvSellerProducts.getAdapter().notifyDataSetChanged();
-                        Toast.makeText(requireContext(),
-                                "Producto eliminado", Toast.LENGTH_SHORT).show();
+                        eliminarProducto(product);
                     }
                 })
+                .show();
+    }
+
+    /**
+     * Elimina el producto de Firestore.
+     */
+    private void eliminarProducto(Product product) {
+
+        // ¿Para qué sirve?: confirmar la eliminación antes de borrar.
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Eliminar producto")
+                .setMessage("¿Seguro que quieres eliminar \"" + product.getName() + "\"?")
+                .setPositiveButton("Eliminar", (d, w) -> {
+
+                    // ¿Para qué sirve?: borrar el documento products/{docId} de Firestore.
+                    // ¿Qué hace?: document(docId).delete(); el SnapshotListener
+                    //             actualizará la lista automáticamente.
+                    // ¿Cuál es su función en el código?: elimina el producto del catálogo.
+                    FirebaseFirestore.getInstance()
+                            .collection("products")
+                            .document(product.getDocId())
+                            .delete()
+                            .addOnSuccessListener(aVoid ->
+                                    Toast.makeText(requireContext(),
+                                            "Producto eliminado", Toast.LENGTH_SHORT).show())
+                            .addOnFailureListener((Exception e) ->
+                                    Toast.makeText(requireContext(),
+                                            "Error: " + e.getMessage(),
+                                            Toast.LENGTH_LONG).show());
+                })
+                .setNegativeButton("Cancelar", null)
                 .show();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-
-        // ¿Para qué sirve?: liberar la referencia al binding.
-        // ¿Qué hace?: pone binding en null cuando la vista se destruye.
         binding = null;
     }
 }

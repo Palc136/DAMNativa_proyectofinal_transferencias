@@ -1,72 +1,72 @@
 package com.alfonso.my_applicationdam_nativa.model;
 
 /**
- * Product representa un producto del catálogo de la tienda.
- * Es una clase de datos simple (POJO) que usan los adapters
- * y las pantallas para mostrar información.
+ * Product representa un producto del catálogo.
+ * Incluye docId (ID del documento en Firestore) y la URL de la imagen subida a Cloudinary.
  */
 public class Product {
 
-    // ¿Para qué sirve?: identificar de forma única el producto.
-    // ¿Qué hace?: almacena un entero que diferencia un producto de otro.
-    // ¿Cuál es su función en el código?: permite referenciar productos sin ambigüedad
-    //             (por ejemplo, al eliminar del carrito o al abrir el detalle).
+    // ¿Para qué sirve?: identificar el documento en Firestore.
+    // ¿Qué hace?: guarda el ID autogenerado por Firestore (String).
+    // ¿Cuál es su función en el código?: con este ID se actualiza o elimina el producto.
+    private String docId;
+
     private int id;
-
-    // ¿Para qué sirve?: mostrar el nombre del producto en la interfaz.
-    // ¿Qué hace?: guarda el texto que se verá en tarjetas y en el detalle.
-    // ¿Cuál es su función en el código?: alimenta el TextView del nombre en item_product.xml
-    //             y en fragment_product_detail.xml.
     private String name;
-
-    // ¿Para qué sirve?: mostrar el precio del producto.
-    // ¿Qué hace?: almacena un valor decimal en pesos colombianos.
-    // ¿Cuál es su función en el código?: se usa para calcular totales del carrito
-    //             y para mostrar el precio en tarjetas y detalle.
     private double price;
-
-    // ¿Para qué sirve?: describir el producto con más detalle.
-    // ¿Qué hace?: guarda un texto extendido para la pantalla de detalle.
-    // ¿Cuál es su función en el código?: se muestra solo en fragment_product_detail.xml.
     private String description;
-
-    // ¿Para qué sirve?: identificar la categoría del producto.
-    // ¿Qué hace?: almacena un texto como "Artesanías", "Café", "Joyería".
-    // ¿Cuál es su función en el código?: permite filtrar en el catálogo.
     private String category;
 
-    /**
-     * Constructor mínimo usado por los datos mock.
-     */
+    // ¿Para qué sirve?: mostrar la imagen real del producto desde Cloudinary.
+    // ¿Qué hace?: guarda la URL devuelta por MediaManager en onSuccess.
+    // ¿Cuál es su función en el código?: Glide la carga en ImageView.
+    private String imageUrl;
+
+    // ¿Para qué sirve?: asociar el producto con su vendedor.
+    // ¿Qué hace?: guarda el UID del vendedor autenticado.
+    // ¿Cuál es su función en el código?: filtra los productos del vendedor logueado.
+    private String vendedorId;
+
+    // Constructor mínimo (compatibilidad con datos mock).
     public Product(int id, String name, double price) {
         this.id = id;
         this.name = name;
         this.price = price;
         this.description = "";
         this.category = "";
+        this.imageUrl = "";
+        this.vendedorId = "";
+        this.docId = "";
     }
 
-    /**
-     * Constructor completo usado cuando se requiere descripción y categoría.
-     */
-    public Product(int id, String name, double price, String description, String category) {
+    // Constructor completo usado cuando se lee desde Firestore.
+    public Product(String docId, int id, String name, double price,
+                   String description, String category,
+                   String imageUrl, String vendedorId) {
+        this.docId = docId;
         this.id = id;
         this.name = name;
         this.price = price;
         this.description = description;
         this.category = category;
+        this.imageUrl = imageUrl;
+        this.vendedorId = vendedorId;
     }
 
-    // Getters y setters: exponen los campos de forma controlada para que
-    // adapters y Fragments puedan leerlos o modificarlos sin acceder directamente.
+    public String getDocId() { return docId; }
     public int getId() { return id; }
     public String getName() { return name; }
     public double getPrice() { return price; }
     public String getDescription() { return description; }
     public String getCategory() { return category; }
+    public String getImageUrl() { return imageUrl; }
+    public String getVendedorId() { return vendedorId; }
 
+    public void setDocId(String docId) { this.docId = docId; }
     public void setName(String name) { this.name = name; }
     public void setPrice(double price) { this.price = price; }
     public void setDescription(String description) { this.description = description; }
     public void setCategory(String category) { this.category = category; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+    public void setVendedorId(String vendedorId) { this.vendedorId = vendedorId; }
 }

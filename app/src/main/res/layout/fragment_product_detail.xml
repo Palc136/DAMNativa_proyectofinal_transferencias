@@ -52,6 +52,28 @@
             android:textColor="@color/brand_orange"
             android:textSize="22sp"
             android:textStyle="bold" />
+        <!-- ¿Para qué sirve?: mostrar el nombre del vendedor del producto. -->
+        <!-- ¿Qué hace?: texto secundario con el nombre traído desde Firestore (users/{uid}). -->
+        <!-- ¿Cuál es su función en el código?: ProductDetailFragment lo rellena en una segunda consulta. -->
+        <TextView
+            android:id="@+id/tvSellerName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <!-- ¿Para qué sirve?: mostrar el correo del vendedor. -->
+        <!-- ¿Qué hace?: texto secundario con el email del vendedor. -->
+        <!-- ¿Cuál es su función en el código?: ProductDetailFragment lo rellena en una segunda consulta. -->
+        <TextView
+            android:id="@+id/tvSellerEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
 
         <!-- ¿Para qué sirve?: mostrar la descripción del producto. -->
         <TextView

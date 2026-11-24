@@ -72,6 +72,14 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:text="Editar datos de la tienda" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLogout"
+                style="@style/Widget.App.Button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Cerrar sesión" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>
