@@ -5,6 +5,13 @@ package com.alfonso.my_applicationdam_nativa.model;
  * Incluye rol y estado para listarlos y gestionarlos.
  */
 public class User {
+    // ¿Para qué sirve?: identificar el documento users/{docId} en Firestore.
+    // ¿Qué hace?: guarda el ID autogenerado por Firestore.
+    // ¿Cuál es su función en el código?: necesario para update() y delete().
+    private String docId;
+
+    public String getDocId() { return docId; }
+    public void setDocId(String docId) { this.docId = docId; }
 
     // ¿Para qué sirve?: identificar de forma única al usuario.
     // ¿Qué hace?: almacena un entero que diferencia un usuario de otro.
@@ -24,6 +31,8 @@ public class User {
 
     // ¿Para qué sirve?: saber si la cuenta está activa o suspendida.
     private boolean active;
+
+    public void setId(int id) { this.id = id; }
 
     public User(int id, String name, String email, String role, boolean active) {
         this.id = id;

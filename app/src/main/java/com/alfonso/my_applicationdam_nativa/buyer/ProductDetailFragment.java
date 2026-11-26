@@ -57,6 +57,37 @@ public class ProductDetailFragment extends Fragment {
                 .document(docId)
                 .get()
                 .addOnSuccessListener((DocumentSnapshot doc) -> {
+                    // ... (código existente que llena tvName, tvPrice, tvDescription, imgProduct) ...
+
+// ¿Para qué sirve?: obtener el UID del vendedor del documento del producto.
+// ¿Qué hace?: lee el campo "vendedorId" del producto.
+// ¿Cuál es su función en el código?: es la clave para consultar users/{uid}.
+                    String vendedorId = doc.getString("vendedorId");
+
+// ¿Para qué sirve?: consultar los datos del vendedor en Firestore.
+// ¿Qué hace?: si vendedorId no es nulo ni "desconocido", lee users/{uid}
+//  y rellena tvSellerName y tvSellerEmail.
+// ¿Cuál es su función en el código?: muestra quién publica el producto.
+                    if (vendedorId != null && !vendedorId.isEmpty() && !"desconocido".equals(vendedorId)) {
+                        FirebaseFirestore.getInstance()
+                                .collection("users")
+                                .document(vendedorId)
+                                .get()
+                                .addOnSuccessListener(sellerDoc -> {
+                                    if (!sellerDoc.exists()) {
+                                        binding.tvSellerName.setText("Vendedor desconocido");
+                                        binding.tvSellerEmail.setText("");
+                                        return;
+                                    }
+                                    String sellerName = sellerDoc.getString("name");
+                                    String sellerEmail = sellerDoc.getString("email");
+                                    binding.tvSellerName.setText("Vendedor: " + (sellerName != null ? sellerName : "—"));
+                                    binding.tvSellerEmail.setText(sellerEmail != null ? sellerEmail : "");
+                                });
+                    } else {
+                        binding.tvSellerName.setText("Vendedor no disponible");
+                        binding.tvSellerEmail.setText("");
+                    }
                     if (!doc.exists()) {
                         Toast.makeText(requireContext(),
                                 "Producto eliminado", Toast.LENGTH_SHORT).show();
@@ -66,8 +97,7 @@ public class ProductDetailFragment extends Fragment {
                     binding.tvName.setText(doc.getString("nombre"));
                     binding.tvCategory.setText(doc.getString("categoria"));
                     Double price = doc.getDouble("precio");
-                    binding.tvPrice.setText("$" + String.format("%,.0f",
-                            price != null ? price : 0.0));
+                    binding.tvPrice.setText("$" + String.format("%,.0f",price != null ? price : 0.0));
                     binding.tvDescription.setText(doc.getString("descripcion"));
 
                     // ¿Para qué sirve?: cargar la imagen real del producto.
