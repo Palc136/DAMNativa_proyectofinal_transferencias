@@ -56,10 +56,13 @@ public class UsersFragment extends Fragment {
         binding.rvUsers.setAdapter(adapter);
 
         // ¿Para qué sirve?: navegar al formulario de usuario nuevo.
+        // ¿Qué hace?: usa nav.navigate() directo porque userFormFragment no es una
+        //pestaña del BottomNav, así que navigateToTab no funcionaría.
+        // ¿Cuál es su función en el código?: abre la pantalla de creación de usuario.
         binding.fabAddUser.setOnClickListener(v -> {
-            if (requireActivity() instanceof MainActivity) {
-                ((MainActivity) requireActivity()).navigateToTab(R.id.userFormFragment);
-            }
+            androidx.navigation.NavController nav =
+                    androidx.navigation.Navigation.findNavController(requireView());
+            nav.navigate(R.id.userFormFragment);
         });
 
         // ¿Para qué sirve?: escuchar la colección users en tiempo real.
